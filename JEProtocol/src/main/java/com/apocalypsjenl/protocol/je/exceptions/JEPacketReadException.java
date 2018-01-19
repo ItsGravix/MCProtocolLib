@@ -5,4 +5,8 @@ public class JEPacketReadException extends Exception {
     public JEPacketReadException(String message) {
         super(message);
     }
+
+    public JEPacketReadException(Throwable cause) {
+        super(cause);
+    }
 }

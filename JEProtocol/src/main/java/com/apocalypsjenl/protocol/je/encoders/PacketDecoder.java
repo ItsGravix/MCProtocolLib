@@ -40,8 +40,7 @@ public class PacketDecoder extends DataInputStream {
             readFully(stringBytes);
             return new String(stringBytes);
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new JEPacketReadException("Failed to read String");
+            throw new JEPacketReadException(e);
         }
     }
 }
