@@ -4,6 +4,7 @@ import com.apocalypsjenl.protocol.je.encoders.PacketDecoder;
 import com.apocalypsjenl.protocol.je.encoders.PacketEncoder;
 import com.apocalypsjenl.protocol.je.exceptions.JEInvalidHandshakeStateException;
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketReadException;
+import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
 import com.apocalypsjenl.protocol.je.packet.JEPacketBase;
 
 import java.io.IOException;
@@ -21,23 +22,47 @@ public class Handshake extends JEPacketBase {
     }
 
     @Override
-    public void read(PacketDecoder decoder) throws JEPacketReadException, IOException {
-        this.protocolVersion = decoder.readVarInt();
-        this.serverAddress = decoder.readString();
-        this.serverPort = decoder.readShort();
+    public void read(PacketDecoder decoder) throws JEPacketReadException {
         try {
+            this.protocolVersion = decoder.readVarInt();
+            this.serverAddress = decoder.readString();
+            this.serverPort = decoder.readShort();
             this.state = State.parseState(decoder.readVarInt());
-        } catch (JEInvalidHandshakeStateException e) {
-            e.printStackTrace();
+        } catch (JEInvalidHandshakeStateException | IOException e) {
+            throw new JEPacketReadException(e);
         }
     }
 
     @Override
-    public void write(PacketEncoder encoder) throws IOException {
-        encoder.writeVarInt(this.protocolVersion);
-        encoder.writeString(this.serverAddress);
-        encoder.writeShort(this.serverPort);
-        encoder.writeVarInt(this.state.getState());
+    public void write(PacketEncoder encoder) throws JEPacketWriteException {
+        try {
+            encoder.writeVarInt(this.protocolVersion);
+            encoder.writeString(this.serverAddress);
+            encoder.writeShort(this.serverPort);
+            encoder.writeVarInt(this.state.getState());
+        } catch (IOException e) {
+            throw new JEPacketWriteException(e);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Handshake{" +
+                "protocolVersion=" + protocolVersion +
+                ", serverAddress='" + serverAddress + '\'' +
+                ", serverPort=" + serverPort +
+                ", state=" + state +
+                '}';
+    }
+
+    public Handshake() {
+    }
+
+    public Handshake(int protocolVersion, String serverAddress, int serverPort, State state) {
+        this.protocolVersion = protocolVersion;
+        this.serverAddress = serverAddress;
+        this.serverPort = serverPort;
+        this.state = state;
     }
 
     public int getProtocolVersion() {
