@@ -1,4 +1,4 @@
-package com.apocalypsjenl.client.je;
+package com.apocalypsjenl.protocol.je.client;
 
 import com.apocalypsjenl.protocol.je.encoders.PacketDecoder;
 import com.apocalypsjenl.protocol.je.encoders.PacketEncoder;
@@ -93,8 +93,7 @@ public class JEClient {
                     ByteArrayInputStream inputStream = new ByteArrayInputStream(packetBytes);
                     PacketDecoder packetDecoder = new PacketDecoder(inputStream);
 
-                    Class packetClass = JEPacketRegister.getPacket(this.protocolState, packetId);
-                    JEPacketBase packetBase = (JEPacketBase) packetClass.newInstance();
+                    JEPacketBase packetBase = JEPacketRegister.getPacket(this.protocolState, packetId);
 
                     packetBase.read(packetDecoder);
 
@@ -102,7 +101,7 @@ public class JEClient {
                 }
 
                 sleep(50);
-            } catch (InterruptedException | IOException | JEPacketReadException | InstantiationException | IllegalAccessException | JEUnknownPacketException e) {
+            } catch (InterruptedException | IOException | JEPacketReadException | JEUnknownPacketException e) {
                 e.printStackTrace();
                 running = false;
             }
