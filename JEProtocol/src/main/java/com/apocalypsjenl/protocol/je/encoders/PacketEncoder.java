@@ -18,7 +18,7 @@ public class PacketEncoder extends DataOutputStream {
                 int writeByte = varInt & 0b1111111;
                 varInt >>>= 7;
 
-                if(varInt != 0) writeByte |= 0b100000000;
+                if(varInt != 0) writeByte |= 0b10000000;
                 writeByte(writeByte);
 
                 if(varInt == 0) break;

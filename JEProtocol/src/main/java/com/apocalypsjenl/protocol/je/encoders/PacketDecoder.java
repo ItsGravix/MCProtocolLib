@@ -22,8 +22,6 @@ public class PacketDecoder extends DataInputStream {
 
                 if(byteShift > 5) throw new JEPacketReadException("Invalid VarInt");
 
-                System.out.println(byteShift);
-                System.out.println(readByte & 0b10000000);
                 if((readByte & 0b10000000) != 0b10000000) break;
             }
         } catch (IOException e) {
@@ -38,7 +36,7 @@ public class PacketDecoder extends DataInputStream {
             int length = readVarInt();
             byte[] stringBytes = new byte[length];
             readFully(stringBytes);
-            return new String(stringBytes);
+            return new String(stringBytes, "UTF-8");
         } catch (IOException e) {
             throw new JEPacketReadException(e);
         }

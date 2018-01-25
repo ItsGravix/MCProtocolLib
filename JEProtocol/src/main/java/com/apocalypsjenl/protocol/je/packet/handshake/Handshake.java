@@ -98,7 +98,7 @@ public class Handshake extends JEPacketBase {
     }
 
     public enum State {
-        LOGIN(1), STATUS(2);
+        STATUS(1), LOGIN(2);
 
         private int state;
 

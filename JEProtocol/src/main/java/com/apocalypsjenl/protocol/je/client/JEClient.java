@@ -6,15 +6,11 @@ import com.apocalypsjenl.protocol.je.exceptions.JEConnectException;
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketReadException;
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
 import com.apocalypsjenl.protocol.je.exceptions.JEUnknownPacketException;
-import com.apocalypsjenl.protocol.je.packet.IPacketListener;
-import com.apocalypsjenl.protocol.je.packet.JEPacketBase;
-import com.apocalypsjenl.protocol.je.packet.JEPacketRegister;
-import com.apocalypsjenl.protocol.je.packet.JEProtocolState;
+import com.apocalypsjenl.protocol.je.packet.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,10 +46,8 @@ public class JEClient {
     }
 
     public void connect(String host, int port) throws JEConnectException {
-        this.socket = new Socket();
-
         try {
-            this.socket.connect(InetSocketAddress.createUnresolved(host, port));
+            this.socket = new Socket(host, port);
             this.packetDecoder = new PacketDecoder(this.socket.getInputStream());
             this.packetEncoder = new PacketEncoder(this.socket.getOutputStream());
         } catch (IOException e) {
@@ -70,10 +64,11 @@ public class JEClient {
             try {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 PacketEncoder packetEncoder = new PacketEncoder(outputStream);
+
+                packetEncoder.writeVarInt(packet.getPacketId());
                 packet.write(packetEncoder);
 
-                this.packetEncoder.writeVarInt(packet.getPacketId());
-                this.packetEncoder.write(outputStream.size());
+                this.packetEncoder.writeVarInt(outputStream.size());
                 this.packetEncoder.write(outputStream.toByteArray());
             } catch (JEPacketWriteException | IOException e) {
                 e.printStackTrace();
@@ -81,31 +76,36 @@ public class JEClient {
         });
     }
 
+    public void setProtocolState(JEProtocolState protocolState) {
+        this.protocolState = protocolState;
+    }
+
     public void listen() {
-        boolean running = true;
-        while (running) {
-            try {
-                if (this.packetDecoder.available() > 0) {
-                    int packetId = this.packetDecoder.readVarInt();
-                    int packetLength = this.packetDecoder.readVarInt();
-                    byte[] packetBytes = new byte[packetLength];
-                    this.packetDecoder.readFully(packetBytes);
+        executor.execute(() -> {
+            boolean running = true;
+            while (running) {
+                try {
+                    if (this.packetDecoder != null && this.packetDecoder.available() > 0) {
+                        int packetLength = this.packetDecoder.readVarInt();
+                        byte[] packetBytes = new byte[packetLength];
+                        this.packetDecoder.readFully(packetBytes);
 
-                    ByteArrayInputStream inputStream = new ByteArrayInputStream(packetBytes);
-                    PacketDecoder packetDecoder = new PacketDecoder(inputStream);
+                        ByteArrayInputStream inputStream = new ByteArrayInputStream(packetBytes);
+                        PacketDecoder packetDecoder = new PacketDecoder(inputStream);
 
-                    JEPacketBase packetBase = JEPacketRegister.getPacket(this.protocolState, packetId);
+                        int packetId = packetDecoder.readVarInt();
+                        JEPacketBase packetBase = JEPacketRegister.getPacket(JEProtocolDirection.SERVER, this.protocolState, packetId);
+                        packetBase.read(packetDecoder);
 
-                    packetBase.read(packetDecoder);
+                        this.packetListeners.forEach(p -> p.handlePacket(packetBase));
+                    }
 
-                    this.packetListeners.forEach(p -> p.handlePacket(packetBase));
+                    sleep(50);
+                } catch (InterruptedException | IOException | JEPacketReadException | JEUnknownPacketException e) {
+                    e.printStackTrace();
+                    running = false;
                 }
-
-                sleep(50);
-            } catch (InterruptedException | IOException | JEPacketReadException | JEUnknownPacketException e) {
-                e.printStackTrace();
-                running = false;
             }
-        }
+        });
     }
 }
