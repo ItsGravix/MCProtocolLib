@@ -12,7 +12,7 @@ public class Handshake extends JEPacketBase {
 
     private int protocolVersion;
     private String serverAddress;
-    private short serverPort;
+    private int serverPort;
     private State state;
 
     @Override
@@ -56,11 +56,11 @@ public class Handshake extends JEPacketBase {
         this.serverAddress = serverAddress;
     }
 
-    public short getServerPort() {
+    public int getServerPort() {
         return serverPort;
     }
 
-    public void setServerPort(short serverPort) {
+    public void setServerPort(int serverPort) {
         this.serverPort = serverPort;
     }
 
