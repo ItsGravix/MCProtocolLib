@@ -1,5 +1,7 @@
 package com.apocalypsjenl.protocol.je.encoders;
 
+import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -10,7 +12,7 @@ public class PacketEncoder extends DataOutputStream {
         super(out);
     }
 
-    public void writeVarInt(int varInt) {
+    public void writeVarInt(int varInt) throws JEPacketWriteException {
         try {
             while(true) {
                 int writeByte = varInt & 0b1111111;
@@ -22,17 +24,17 @@ public class PacketEncoder extends DataOutputStream {
                 if(varInt == 0) break;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new JEPacketWriteException(e);
         }
     }
 
-    public void writeString(String value) {
+    public void writeString(String value) throws JEPacketWriteException {
         try {
             byte[] stringBytes = value.getBytes("UTF-8");
             writeVarInt(stringBytes.length);
             write(stringBytes);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new JEPacketWriteException(e);
         }
     }
 }

@@ -4,6 +4,7 @@ import com.apocalypsjenl.protocol.je.encoders.PacketDecoder;
 import com.apocalypsjenl.protocol.je.encoders.PacketEncoder;
 import com.apocalypsjenl.protocol.je.exceptions.JEConnectException;
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketReadException;
+import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
 import com.apocalypsjenl.protocol.je.exceptions.JEUnknownPacketException;
 import com.apocalypsjenl.protocol.je.packet.IPacketListener;
 import com.apocalypsjenl.protocol.je.packet.JEPacketBase;
@@ -74,7 +75,7 @@ public class JEClient {
                 this.packetEncoder.writeVarInt(packet.getPacketId());
                 this.packetEncoder.write(outputStream.size());
                 this.packetEncoder.write(outputStream.toByteArray());
-            } catch (IOException e) {
+            } catch (JEPacketWriteException | IOException e) {
                 e.printStackTrace();
             }
         });
