@@ -6,6 +6,7 @@ import com.apocalypsjenl.protocol.je.exceptions.JEInvalidHandshakeStateException
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketReadException;
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
 import com.apocalypsjenl.protocol.je.packet.JEPacketBase;
+import com.apocalypsjenl.protocol.je.packet.JEProtocolVersion;
 
 import java.io.IOException;
 
@@ -60,6 +61,13 @@ public class Handshake extends JEPacketBase {
 
     public Handshake(int protocolVersion, String serverAddress, int serverPort, State state) {
         this.protocolVersion = protocolVersion;
+        this.serverAddress = serverAddress;
+        this.serverPort = serverPort;
+        this.state = state;
+    }
+
+    public Handshake(JEProtocolVersion protocolVersion, String serverAddress, int serverPort, State state) {
+        this.protocolVersion = protocolVersion.getProtocolId();
         this.serverAddress = serverAddress;
         this.serverPort = serverPort;
         this.state = state;

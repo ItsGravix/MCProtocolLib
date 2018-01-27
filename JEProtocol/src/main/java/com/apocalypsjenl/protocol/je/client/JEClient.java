@@ -2,10 +2,7 @@ package com.apocalypsjenl.protocol.je.client;
 
 import com.apocalypsjenl.protocol.je.encoders.PacketDecoder;
 import com.apocalypsjenl.protocol.je.encoders.PacketEncoder;
-import com.apocalypsjenl.protocol.je.exceptions.JEConnectException;
-import com.apocalypsjenl.protocol.je.exceptions.JEPacketReadException;
-import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
-import com.apocalypsjenl.protocol.je.exceptions.JEUnknownPacketException;
+import com.apocalypsjenl.protocol.je.exceptions.*;
 import com.apocalypsjenl.protocol.je.packet.*;
 
 import java.io.ByteArrayInputStream;
@@ -55,25 +52,33 @@ public class JEClient {
         }
     }
 
+    public void disconnect() throws JEDisconnectException {
+        try {
+            //TODO send disconnect packet to server
+            this.socket.close();
+        } catch (IOException e) {
+            throw new JEDisconnectException(e);
+        }
+    }
+
     public void addListener(IPacketListener listener) {
         this.packetListeners.add(listener);
     }
 
     public void sendPacket(JEPacketBase packet) {
-        executor.execute(() -> {
-            try {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                PacketEncoder packetEncoder = new PacketEncoder(outputStream);
+        try {
 
-                packetEncoder.writeVarInt(packet.getPacketId());
-                packet.write(packetEncoder);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            PacketEncoder packetEncoder = new PacketEncoder(outputStream);
 
-                this.packetEncoder.writeVarInt(outputStream.size());
-                this.packetEncoder.write(outputStream.toByteArray());
-            } catch (JEPacketWriteException | IOException e) {
-                e.printStackTrace();
-            }
-        });
+            packetEncoder.writeVarInt(packet.getPacketId());
+            packet.write(packetEncoder);
+
+            this.packetEncoder.writeVarInt(outputStream.size());
+            this.packetEncoder.write(outputStream.toByteArray());
+        } catch (JEPacketWriteException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setProtocolState(JEProtocolState protocolState) {
@@ -85,7 +90,7 @@ public class JEClient {
             boolean running = true;
             while (running) {
                 try {
-                    if (this.packetDecoder != null && this.packetDecoder.available() > 0) {
+                    if (this.socket != null && !this.socket.isClosed() && this.packetDecoder != null && this.packetDecoder.available() > 0) {
                         int packetLength = this.packetDecoder.readVarInt();
                         byte[] packetBytes = new byte[packetLength];
                         this.packetDecoder.readFully(packetBytes);
@@ -97,7 +102,7 @@ public class JEClient {
                         JEPacketBase packetBase = JEPacketRegister.getPacket(JEProtocolDirection.SERVER, this.protocolState, packetId);
                         packetBase.read(packetDecoder);
 
-                        this.packetListeners.forEach(p -> p.handlePacket(packetBase));
+                        executor.execute(() -> this.packetListeners.forEach(p -> p.handlePacket(packetBase)));
                     }
 
                     sleep(50);

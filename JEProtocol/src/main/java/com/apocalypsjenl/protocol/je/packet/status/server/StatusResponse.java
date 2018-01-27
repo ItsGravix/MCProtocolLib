@@ -6,6 +6,7 @@ import com.apocalypsjenl.protocol.je.exceptions.JEPacketReadException;
 import com.apocalypsjenl.protocol.je.exceptions.JEPacketWriteException;
 import com.apocalypsjenl.protocol.je.packet.JEPacketBase;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
@@ -60,11 +61,12 @@ public class StatusResponse extends JEPacketBase {
 
         private StatusVersionPayload version;
         private StatusPlayerPayload players;
-        private StatusDescriptionPayload description;
+        //Temporarily fix until Chat parser
+        private JsonObject description;
         @SerializedName("favicon")
         private String serverIcon;
 
-        public StatusResponsePayload(StatusVersionPayload version, StatusPlayerPayload players, StatusDescriptionPayload description, String serverIcon) {
+        public StatusResponsePayload(StatusVersionPayload version, StatusPlayerPayload players, JsonObject description, String serverIcon) {
             this.version = version;
             this.players = players;
             this.description = description;
@@ -87,11 +89,11 @@ public class StatusResponse extends JEPacketBase {
             this.players = players;
         }
 
-        public StatusDescriptionPayload getDescription() {
+        public JsonObject getDescription() {
             return description;
         }
 
-        public void setDescription(StatusDescriptionPayload description) {
+        public void setDescription(JsonObject description) {
             this.description = description;
         }
 
@@ -236,6 +238,8 @@ public class StatusResponse extends JEPacketBase {
         }
     }
 
+    //TODO doesn't work because of some modifications to the text
+    //TODO implement ChatParser
     public class StatusDescriptionPayload {
 
         @SerializedName("text")
