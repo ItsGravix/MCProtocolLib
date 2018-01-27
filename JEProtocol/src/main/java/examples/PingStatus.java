@@ -2,10 +2,14 @@ package examples;
 
 import com.apocalypsjenl.protocol.je.client.JEClient;
 import com.apocalypsjenl.protocol.je.exceptions.JEConnectException;
+import com.apocalypsjenl.protocol.je.exceptions.JEDisconnectException;
 import com.apocalypsjenl.protocol.je.packet.JEProtocolState;
+import com.apocalypsjenl.protocol.je.packet.JEProtocolVersion;
 import com.apocalypsjenl.protocol.je.packet.handshake.Handshake;
 import com.apocalypsjenl.protocol.je.packet.status.client.StatusPing;
 import com.apocalypsjenl.protocol.je.packet.status.client.StatusRequest;
+
+import static java.lang.Thread.sleep;
 
 public class PingStatus {
 
@@ -14,19 +18,18 @@ public class PingStatus {
     }
 
     public PingStatus() {
+        JEClient client = new JEClient();
         try {
-            JEClient client = new JEClient();
-            client.connect("play.happymine.nl", 25565);
+            client.connect("play.happymine.nl");
 
-            client.addListener(System.out::println);
+            client.addListener(new DemoPacketHandler(client));
             client.listen();
 
-            Handshake handshake = new Handshake(340, "play.happymine.nl", 25565, Handshake.State.STATUS);
+            Handshake handshake = new Handshake(JEProtocolVersion.v1_12_2, "play.happymine.nl", 25565, Handshake.State.STATUS);
 
             client.sendPacket(handshake);
             client.setProtocolState(JEProtocolState.STATUS);
             client.sendPacket(new StatusRequest());
-            client.sendPacket(new StatusPing(System.currentTimeMillis()));
         } catch (JEConnectException e) {
             e.printStackTrace();
         }
